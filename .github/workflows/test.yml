@@ -71,6 +71,35 @@ jobs:
         cd Documentation
         make html
 
+  lin-with-libvvp:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [
+          '22.04',
+          '24.04'
+        ]
+    runs-on: ubuntu-${{ matrix.os }}
+    name: '🐧 Ubuntu ${{ matrix.os }} (with libvvp)'
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt update -qq
+        sudo apt install -y make g++ git bison flex gperf libreadline-dev libbz2-dev autoconf python3-sphinx python3-docopt
+
+    - name: Build, check and install
+      run: |
+        autoconf
+        ./configure --enable-libveriuser --enable-libvvp
+        make -j$(nproc) check
+        sudo make install
+
+    - name: Test
+      run: ./.github/test.sh
+
   win:
     runs-on: windows-latest
     strategy:
