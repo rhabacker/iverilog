@@ -15,6 +15,11 @@ AC_SUBST([LIBVVP_SOVERSION], [1])
 # setup libvvp version
 AC_SUBST([LIBVVP_VERSION], [VER_MAJOR.VER_MINOR])
 
+# setup libvvp soversion, which depends on abi not package version
+AC_SUBST([LIBVVP_SOVERSION], [1])
+# setup libvvp version
+AC_SUBST([LIBVVP_VERSION], [VER_MAJOR.VER_MINOR])
+
 AC_CONFIG_SRCDIR([netlist.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_HEADERS([_pli_types.h])

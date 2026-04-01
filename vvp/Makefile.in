@@ -23,6 +23,7 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 datarootdir = @datarootdir@
+builddir = @builddir@
 
 VPATH = $(srcdir)
 
@@ -33,7 +34,7 @@ mandir = @mandir@
 # It is a little different from the generic includedir.
 includedir = @includedir@/iverilog$(suffix)
 pdfdir = @docdir@
-pkgconfigdir = @libdir@/pkgconfig
+pkgconfigdir = $(libdir)/pkgconfig
 
 # For a cross compile these defines will need to be set accordingly.
 HOSTCC = @CC@
@@ -117,7 +118,7 @@ else
 	rm -f vvp$(suffix).exe
 endif
 else
-	LD_LIBRARY_PATH=. ./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
+	LD_LIBRARY_PATH=$(builddir) ./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
 endif
 
 clean:
@@ -284,6 +285,7 @@ endif
 
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(bindir)" \
+		"$(DESTDIR)$(includedir)" \
 		"$(DESTDIR)$(libdir)" \
 		"$(DESTDIR)$(INSTALL_DOCDIR)" \
 		"$(DESTDIR)$(INSTALL_PDFDIR)"
