@@ -66,21 +66,54 @@ LIBS = @LIBS@ @EXTRALIBS@ @DLLIB@
 
 LIBVVP_VERSION = @LIBVVP_VERSION@
 LIBVVP_SOVERSION = @LIBVVP_SOVERSION@
+LIBBASENAME=vvp$(suffix)
 
-ifeq (@WIN32@,yes)
+ifeq (@MINGW32@,yes)
 SLDIR=$(bindir)
 SLEXT=dll
-ifeq (@MINGW32@,yes)
 IMPEXT=dll.a
 LIBPREFIX=lib
-else
+LIBNAME=$(LIBPREFIX)$(LIBBASENAME)
+LIBSONAME=$(LIBNAME).$(SLEXT).$(LIBVVP_SOVERSION)
+LIBREALNAME=$(LIBNAME).$(SLEXT).$(LIBVVP_VERSION)
+LIBLINKNAME=$(LIBNAME).$(SLEXT)
+LIBTARGET=$(LIBNAME)-$(LIBVVP_SOVERSION).$(SLEXT)
+LIBBUILD=$(LIBTARGET)
+LIBLINKFLAGS=-Wl,--out-implib $(LIBNAME).$(IMPEXT) -Wl,--no-undefined
+LIBPOSTBUILD=@true
+LIBINSTALL=$(LIBTARGET)
+LIBDEVELINSTALL=$(LIBNAME).$(IMPEXT)
+else ifeq (@WIN32@,yes)
+SLDIR=$(bindir)
+SLEXT=dll
 IMPEXT=lib
 LIBPREFIX=
-endif
+LIBNAME=$(LIBPREFIX)$(LIBBASENAME)
+LIBSONAME=$(LIBNAME).$(SLEXT).$(LIBVVP_SOVERSION)
+LIBREALNAME=$(LIBNAME).$(SLEXT).$(LIBVVP_VERSION)
+LIBLINKNAME=$(LIBNAME).$(SLEXT)
+LIBTARGET=$(LIBLINKNAME)
+LIBBUILD=$(LIBLINKNAME)
+LIBLINKFLAGS=
+LIBPOSTBUILD=@true
+LIBINSTALL=$(LIBTARGET)
+LIBDEVELINSTALL=
 else
-LIBPREFIX=lib
+CXXFLAGS+= -fPIC
+CFLAGS+= -fPIC
 SLDIR=$(libdir)
 SLEXT=so
+LIBPREFIX=lib
+LIBNAME=$(LIBPREFIX)$(LIBBASENAME)
+LIBSONAME=$(LIBNAME).$(SLEXT).$(LIBVVP_SOVERSION)
+LIBREALNAME=$(LIBNAME).$(SLEXT).$(LIBVVP_VERSION)
+LIBLINKNAME=$(LIBNAME).$(SLEXT)
+LIBTARGET=$(LIBREALNAME)
+LIBBUILD=$(LIBLINKNAME)
+LIBLINKFLAGS=-Wl,-soname,$(LIBSONAME)
+LIBPOSTBUILD=ln -sf $(LIBREALNAME) $(LIBSONAME) && ln -sf $(LIBSONAME) $(LIBLINKNAME)
+LIBINSTALL=$(LIBTARGET)
+LIBDEVELINSTALL=
 endif
 
 MDIR1 = -DMODULE_DIR1='"$(libdir)/ivl$(suffix)"'
@@ -120,7 +153,7 @@ else
 endif
 
 clean:
-	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc $(LIBPREFIX)vvp$(suffix)*.$(SLEXT)*
+	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc $(LIBNAME)*.$(SLEXT)*
 	rm -rf dep vvp@EXEEXT@ parse.output vvp.man vvp.ps vvp.pdf vvp.exp
 
 distclean: clean
@@ -147,36 +180,15 @@ dep:
 
 ifeq (@LIBVVP@,yes)
 
-ifeq (@MINGW32@,yes)
-LDFLAGS+= -Wl,--no-undefined
-else
-ifeq (@WIN32@,yes)
-else
-CXXFLAGS+= -fPIC
-CFLAGS+= -fPIC
-endif
-endif
-
 # To avoid setting LD_LIBRARY_PATH when running vvp from the build tree,
 # add option -Wl,-rpath=`pwd` to the CXX command below.
 
-vvp@EXEEXT@: main.o $(srcdir)/vvp.def libvvp$(suffix).$(SLEXT)
+vvp@EXEEXT@: main.o $(srcdir)/vvp.def $(LIBBUILD)
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o -L. $(LDFLAGS) -lvvp$(suffix) $(LIBS)
 
-ifeq (@MINGW32@,yes)
-libvvp$(suffix).$(SLEXT): $O
-	$(CXX) -shared $(LDFLAGS) -o $(LIBPREFIX)vvp$(suffix)-$(LIBVVP_SOVERSION).$(SLEXT) -Wl,--out-implib $(LIBPREFIX)vvp$(suffix).$(IMPEXT) $O $(LIBS) $(dllib)
-else
-libvvp$(suffix).$(SLEXT): $O
-	$(CXX) -shared $(LDFLAGS) \
-		-Wl,-soname,libvvp$(suffix).$(SLEXT).$(LIBVVP_SOVERSION) \
-		-o libvvp$(suffix).$(SLEXT).$(LIBVVP_VERSION) \
-		$O $(LIBS) $(dllib)
-	ln -sf libvvp$(suffix).$(SLEXT).$(LIBVVP_VERSION) \
-		libvvp$(suffix).$(SLEXT).$(LIBVVP_SOVERSION)
-	ln -sf libvvp$(suffix).$(SLEXT).$(LIBVVP_SOVERSION) \
-		libvvp$(suffix).$(SLEXT)
-endif
+$(LIBBUILD): $O
+	$(CXX) -shared $(LIBLINKFLAGS) -o $(LIBTARGET) $^ $(LIBS)
+	$(LIBPOSTBUILD)
 else
 ifeq (@WIN32@,yes)
 # To support cocotb, we export the VPI functions directly. This allows
@@ -264,19 +276,15 @@ installpdf: vvp.pdf installdirs
 installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 ifeq (@LIBVVP@,yes)
+	$(INSTALL_PROGRAM) ./$(LIBINSTALL) "$(DESTDIR)$(SLDIR)/$(LIBINSTALL)"
 ifeq (@WIN32@,yes)
-	$(INSTALL_PROGRAM) ./$(LIBPREFIX)vvp$(suffix)-$(LIBVVP_SOVERSION).$(SLEXT) "$(DESTDIR)$(bindir)/$(LIBPREFIX)vvp$(suffix)-$(LIBVVP_SOVERSION).$(SLEXT)"
-	$(INSTALL_PROGRAM) ./$(LIBPREFIX)vvp$(suffix).$(IMPEXT) "$(DESTDIR)$(libdir)/$(LIBPREFIX)vvp$(suffix).$(IMPEXT)"
+ifneq ($(LIBDEVELINSTALL),)
+	$(INSTALL_PROGRAM) ./$(LIBDEVELINSTALL) "$(DESTDIR)$(libdir)/$(LIBDEVELINSTALL)"
+endif
 else
 	# Install real library
-	$(INSTALL_PROGRAM) ./libvvp$(suffix).$(SLEXT).$(LIBVVP_VERSION) \
-	  "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT).$(LIBVVP_VERSION)"
-	# SONAME symlink (runtime)
-	ln -sf libvvp$(suffix).$(SLEXT).$(LIBVVP_VERSION) \
-	  "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT).$(LIBVVP_SOVERSION)"
-	# Linker symlink (devel)
-	ln -sf libvvp$(suffix).$(SLEXT).$(LIBVVP_SOVERSION) \
-	  "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT)"
+	ln -sf $(LIBREALNAME) "$(DESTDIR)$(SLDIR)/$(LIBSONAME)"
+	ln -sf $(LIBSONAME) "$(DESTDIR)$(SLDIR)/$(LIBLINKNAME)"
 endif
 	$(INSTALL_DATA) $(srcdir)/libvvp.h "$(DESTDIR)$(includedir)/libvvp.h"
 endif
@@ -289,20 +297,22 @@ installdirs: $(srcdir)/../mkinstalldirs
 		"$(DESTDIR)$(INSTALL_PDFDIR)"
 
 installpkgconfig:
-	$(INSTALL) -d $(DESTDIR)$(pkgconfigdir)
-	$(INSTALL_DATA) libvvp.pc $(DESTDIR)$(pkgconfigdir)
+	$(INSTALL) -d "$(DESTDIR)$(pkgconfigdir)"
+	$(INSTALL_DATA) libvvp.pc "$(DESTDIR)$(pkgconfigdir)"
 
 uninstall: $(UNINSTALL32)
 	rm -f "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 	rm -f "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1" "$(DESTDIR)$(pdfdir)/vvp$(suffix).pdf"
 ifeq (@LIBVVP@,yes)
+	rm -f "$(DESTDIR)$(SLDIR)/$(LIBINSTALL)"
 ifeq (@WIN32@,yes)
-	rm -f "$(DESTDIR)$(bindir)/$(LIBPREFIX)vvp$(suffix)-$(LIBVVP_SOVERSION).$(SLEXT)"
-	rm -f "$(DESTDIR)$(libdir)/$(LIBPREFIX)vvp$(suffix).$(IMPEXT)"
+ifneq ($(LIBDEVELINSTALL),)
+	rm -f "$(DESTDIR)$(libdir)/$(LIBDEVELINSTALL)"
+endif
 else
-	rm -f "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT)"
-	rm -f "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT).$(LIBVVP_SOVERSION)"
-	rm -f "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT).$(LIBVVP_VERSION)"
+	rm -f "$(DESTDIR)$(SLDIR)/$(LIBLINKNAME)"
+	rm -f "$(DESTDIR)$(SLDIR)/$(LIBSONAME)"
+	rm -f "$(DESTDIR)$(SLDIR)/$(LIBREALNAME)"
 endif
 	rm -f "$(DESTDIR)$(pkgconfigdir)/libvvp.pc"
 	rm -f "$(DESTDIR)$(includedir)/libvvp.h"
