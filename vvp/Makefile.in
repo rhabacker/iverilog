@@ -33,6 +33,7 @@ mandir = @mandir@
 # It is a little different from the generic includedir.
 includedir = @includedir@/iverilog$(suffix)
 pdfdir = @docdir@
+pkgconfigdir = @libdir@/pkgconfig
 
 # For a cross compile these defines will need to be set accordingly.
 HOSTCC = @CC@
@@ -62,10 +63,21 @@ CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
 
+LIBVVP_VERSION = @LIBVVP_VERSION@
+LIBVVP_SOVERSION = @LIBVVP_SOVERSION@
+
 ifeq (@WIN32@,yes)
 SLDIR=$(bindir)
 SLEXT=dll
+ifeq (@MINGW32@,yes)
+IMPEXT=dll.a
+LIBPREFIX=lib
 else
+IMPEXT=lib
+LIBPREFIX=
+endif
+else
+LIBPREFIX=lib
 SLDIR=$(libdir)
 SLEXT=so
 endif
@@ -105,11 +117,11 @@ else
 	rm -f vvp$(suffix).exe
 endif
 else
-	./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
+	LD_LIBRARY_PATH=. ./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
 endif
 
 clean:
-	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc libvvp$(suffix).$(SLEXT)
+	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc $(LIBPREFIX)vvp$(suffix)*.$(SLEXT)*
 	rm -rf dep vvp@EXEEXT@ parse.output vvp.man vvp.ps vvp.pdf vvp.exp
 
 distclean: clean
@@ -136,7 +148,15 @@ dep:
 
 ifeq (@LIBVVP@,yes)
 
-CPPFLAGS+= -fpic
+ifeq (@MINGW32@,yes)
+LDFLAGS+= -Wl,--no-undefined
+else
+ifeq (@WIN32@,yes)
+else
+CXXFLAGS+= -fPIC
+CFLAGS+= -fPIC
+endif
+endif
 
 # To avoid setting LD_LIBRARY_PATH when running vvp from the build tree,
 # add option -Wl,-rpath=`pwd` to the CXX command below.
@@ -144,8 +164,20 @@ CPPFLAGS+= -fpic
 vvp@EXEEXT@: main.o $(srcdir)/vvp.def libvvp$(suffix).$(SLEXT)
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ main.o -L. $(LDFLAGS) -lvvp$(suffix) $(LIBS)
 
+ifeq (@MINGW32@,yes)
 libvvp$(suffix).$(SLEXT): $O
-	$(CXX) -shared $(LDFLAGS) -o libvvp$(suffix).$(SLEXT) $O $(LIBS) $(dllib)
+	$(CXX) -shared $(LDFLAGS) -o $(LIBPREFIX)vvp$(suffix)-$(LIBVVP_SOVERSION).$(SLEXT) -Wl,--out-implib $(LIBPREFIX)vvp$(suffix).$(IMPEXT) $O $(LIBS) $(dllib)
+else
+libvvp$(suffix).$(SLEXT): $O
+	$(CXX) -shared $(LDFLAGS) \
+		-Wl,-soname,libvvp$(suffix).$(SLEXT).$(LIBVVP_SOVERSION) \
+		-o libvvp$(suffix).$(SLEXT).$(LIBVVP_VERSION) \
+		$O $(LIBS) $(dllib)
+	ln -sf libvvp$(suffix).$(SLEXT).$(LIBVVP_VERSION) \
+		libvvp$(suffix).$(SLEXT).$(LIBVVP_SOVERSION)
+	ln -sf libvvp$(suffix).$(SLEXT).$(LIBVVP_SOVERSION) \
+		libvvp$(suffix).$(SLEXT)
+endif
 else
 ifeq (@WIN32@,yes)
 # To support cocotb, we export the VPI functions directly. This allows
@@ -220,7 +252,7 @@ stamp-config-h: $(srcdir)/config.h.in ../config.status
 	cd ..; ./config.status --header=vvp/config.h
 config.h: stamp-config-h
 
-install: all installdirs installfiles
+install: all installdirs installfiles installpkgconfig
 
 F = ./vvp@EXEEXT@ $(srcdir)/libvvp.h $(INSTALL_DOC)
 
@@ -233,7 +265,20 @@ installpdf: vvp.pdf installdirs
 installfiles: $(F) | installdirs
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 ifeq (@LIBVVP@,yes)
-	$(INSTALL_PROGRAM) ./libvvp$(suffix).$(SLEXT) "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT)"
+ifeq (@WIN32@,yes)
+	$(INSTALL_PROGRAM) ./$(LIBPREFIX)vvp$(suffix)-$(LIBVVP_SOVERSION).$(SLEXT) "$(DESTDIR)$(bindir)/$(LIBPREFIX)vvp$(suffix)-$(LIBVVP_SOVERSION).$(SLEXT)"
+	$(INSTALL_PROGRAM) ./$(LIBPREFIX)vvp$(suffix).$(IMPEXT) "$(DESTDIR)$(libdir)/$(LIBPREFIX)vvp$(suffix).$(IMPEXT)"
+else
+	# Install real library
+	$(INSTALL_PROGRAM) ./libvvp$(suffix).$(SLEXT).$(LIBVVP_VERSION) \
+	  "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT).$(LIBVVP_VERSION)"
+	# SONAME symlink (runtime)
+	ln -sf libvvp$(suffix).$(SLEXT).$(LIBVVP_VERSION) \
+	  "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT).$(LIBVVP_SOVERSION)"
+	# Linker symlink (devel)
+	ln -sf libvvp$(suffix).$(SLEXT).$(LIBVVP_SOVERSION) \
+	  "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT)"
+endif
 	$(INSTALL_DATA) $(srcdir)/libvvp.h "$(DESTDIR)$(includedir)/libvvp.h"
 endif
 
@@ -243,12 +288,23 @@ installdirs: $(srcdir)/../mkinstalldirs
 		"$(DESTDIR)$(INSTALL_DOCDIR)" \
 		"$(DESTDIR)$(INSTALL_PDFDIR)"
 
+installpkgconfig:
+	$(INSTALL) -d $(DESTDIR)$(pkgconfigdir)
+	$(INSTALL_DATA) libvvp.pc $(DESTDIR)$(pkgconfigdir)
 
 uninstall: $(UNINSTALL32)
 	rm -f "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
 	rm -f "$(DESTDIR)$(mandir)/man1/vvp$(suffix).1" "$(DESTDIR)$(pdfdir)/vvp$(suffix).pdf"
 ifeq (@LIBVVP@,yes)
+ifeq (@WIN32@,yes)
+	rm -f "$(DESTDIR)$(bindir)/$(LIBPREFIX)vvp$(suffix)-$(LIBVVP_SOVERSION).$(SLEXT)"
+	rm -f "$(DESTDIR)$(libdir)/$(LIBPREFIX)vvp$(suffix).$(IMPEXT)"
+else
 	rm -f "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT)"
+	rm -f "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT).$(LIBVVP_SOVERSION)"
+	rm -f "$(DESTDIR)$(SLDIR)/libvvp$(suffix).$(SLEXT).$(LIBVVP_VERSION)"
+endif
+	rm -f "$(DESTDIR)$(pkgconfigdir)/libvvp.pc"
 	rm -f "$(DESTDIR)$(includedir)/libvvp.h"
 endif
 

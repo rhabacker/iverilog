@@ -35,6 +35,7 @@ suffix = @install_suffix@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
+builddir=@builddir@
 datarootdir = @datarootdir@
 VERSION_MAJOR = @VERSION_MAJOR@
 VERSION_MINOR = @VERSION_MINOR@
@@ -161,7 +162,7 @@ else
 	rm vvp/vvp$(suffix).exe
 endif
 else
-	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
+	LD_LIBRARY_PATH=$(builddir)/vvp vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
 endif
 
 clean:

@@ -10,6 +10,11 @@ AC_SUBST([VERSION], ["VER_MAJOR.VER_MINOR (VER_EXTRA)"])
 # used in res.rc
 AC_SUBST([PRODUCTVERSION], ["VER_MAJOR,VER_MINOR,0,0"])
 
+# setup libvvp soversion, which depends on abi not package version
+AC_SUBST([LIBVVP_SOVERSION], [1])
+# setup libvvp version
+AC_SUBST([LIBVVP_VERSION], [VER_MAJOR.VER_MINOR])
+
 AC_CONFIG_SRCDIR([netlist.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_HEADERS([_pli_types.h])
@@ -376,5 +381,5 @@ then
 AC_MSG_ERROR(cannot configure white space in libdir: $libdir)
 fi
 AC_MSG_RESULT(ok)
-AC_CONFIG_FILES([Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile version_base.h iverilog-vpi.man driver/iverilog.man driver-vpi/res.rc vvp/vvp.man])
+AC_CONFIG_FILES([Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile tgt-blif/Makefile tgt-sizer/Makefile version_base.h iverilog-vpi.man driver/iverilog.man driver-vpi/res.rc vvp/vvp.man vvp/libvvp.pc])
 AC_OUTPUT
