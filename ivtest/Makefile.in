@@ -1,0 +1,5 @@
+abs_top_builddir=@abs_top_builddir@
+abs_top_srcdir = @abs_top_srcdir@
+
+check-full:
+	LD_LIBRARY_PATH=$(abs_top_builddir)/vvp $(abs_top_srcdir)/.github/test.sh

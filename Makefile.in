@@ -165,6 +165,9 @@ else
 	LD_LIBRARY_PATH=$(builddir)/vvp vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
 endif
 
+check-full:
+	make -C ivtest $@
+
 clean:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 	rm -f *.o parse.cc parse.h lexor.cc
