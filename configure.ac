@@ -204,7 +204,14 @@ AC_FUNC_FSEEKO
 # Build VVP as a library and stub
 AC_ARG_ENABLE([libvvp],
     [AS_HELP_STRING([--enable-libvvp], [build VVP as a shared library])],
-    [AC_SUBST(LIBVVP, yes)],[])
+    [enable_libvvp=yes],
+    [enable_libvvp=no])
+
+AC_SUBST([LIBVVP], [$enable_libvvp])
+
+AS_IF([test "x$enable_libvvp" = "xyes"],
+    [AC_MSG_NOTICE([Building with libvvp support enabled])],
+    [AC_MSG_NOTICE([Building with libvvp support disabled])])
 
 AC_ARG_ENABLE([libveriuser],
     [AS_HELP_STRING([--enable-libveriuser], [include support for PLI 1 (deprecated)])],
