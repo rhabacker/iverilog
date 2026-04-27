@@ -8,6 +8,7 @@ use strict;
 use warnings;
 
 our $VERSION = '1.01';
+our $srcdir = '.';
 
 use base 'Exporter';
 
@@ -121,12 +122,12 @@ sub read_regression_list {
            } elsif ($fields[3] =~ s/^gold=//) {
                $testmod{$tname} = "" ;
                $diff{$tname} = "";
-               $gold{$tname} = "gold/$fields[3]";
+               $gold{$tname} = "$srcdir/gold/$fields[3]";
                $offset{$tname} = 0;
            } elsif ($fields[3] =~ s/^unordered=//) {
                $testmod{$tname} = "" ;
                $diff{$tname} = "";
-               $gold{$tname} = "gold/$fields[3]";
+               $gold{$tname} = "$srcdir/gold/$fields[3]";
                $unordered{$tname} = 1;
                $offset{$tname} = 0;
            } else {
@@ -148,12 +149,12 @@ sub read_regression_list {
            } elsif ($fields[4] =~ s/^gold=//) {
                $testmod{$tname} = "" ;
                $diff{$tname} = "";
-               $gold{$tname} = "gold/$fields[4]";
+               $gold{$tname} = "$srcdir/gold/$fields[4]";
                $offset{$tname} = 0;
            } elsif ($fields[4] =~ s/^unordered=//) {
                $testmod{$tname} = "" ;
                $diff{$tname} = "";
-               $gold{$tname} = "gold/$fields[4]";
+               $gold{$tname} = "$srcdir/gold/$fields[4]";
                $unordered{$tname} = 1;
                $offset{$tname} = 0;
            }

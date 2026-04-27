@@ -8,12 +8,13 @@ use strict;
 #use warnings;
 
 our $VERSION = '1.03';
+our $SRCDIR = '.';
 
 use base 'Exporter';
 
 our @EXPORT = qw(get_args get_regress_fn get_ivl_version run_program);
 
-use constant DEF_REGRESS_FN => './regress.list';  # Default regression list.
+use constant DEF_REGRESS_FN => 'regress.list';  # Default regression list.
 use constant DEF_SUFFIX => '';  # Default suffix.
 use constant DEF_STRICT => 0;   # Default strict option.
 use constant DEF_WITH_VALG => 0;  # Default valgrind usage (keep this off).
@@ -66,7 +67,7 @@ sub usage {
 # or the file specified in the command line arguments.
 #
 sub get_regress_fn {
-    my $regress_fn = DEF_REGRESS_FN;
+    my $regress_fn = "$SRCDIR/" . DEF_REGRESS_FN;
 
     # Is there a command line argument (alternate regression list)?
     if ($#ARGV != -1) {

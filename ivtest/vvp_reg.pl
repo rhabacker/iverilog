@@ -21,18 +21,24 @@
 #    along with this program; if not, write to the Free Software
 #    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
 
-use lib './perl-lib';
-
+use FindBin;
+use lib "$FindBin::Bin/perl-lib";
 use RegressionList;
 use Diff;
 use Reporting;
 use Environment;
 
+use Cwd qw(getcwd);
 
 #
 #  Main script
 #
+
 &open_report_file;
+my $srcdir   = $FindBin::Bin;
+$Environment::SRCDIR = $srcdir;
+$RegressionList::srcdir = $srcdir;
+my $builddir = getcwd();
 my ($suffix, $strict, $with_valg, $force_sv) = &get_args;
 my $ver = &get_ivl_version($suffix);
 my $sfx = $suffix ? ", suffix: $suffix" : "";
@@ -47,16 +53,16 @@ if ($#ARGV != -1) {
     &read_regression_list($regress_fn, $ver, $force_sv, "");
 } else {
     if ($force_sv) {
-        &read_regression_list("regress-fsv.list", $ver, $force_sv, "");
+        &read_regression_list("$srcdir/regress-fsv.list", $ver, $force_sv, "");
     }
-    &read_regression_list("regress-ivl1.list", $ver, $force_sv, "");
-    &read_regression_list("regress-vlg.list",  $ver, $force_sv, "");
-    &read_regression_list("regress-sv.list",   $ver, $force_sv, "");
-    &read_regression_list("regress-vhdl.list", $ver, $force_sv, "");
+    &read_regression_list("$srcdir/regress-ivl1.list", $ver, $force_sv, "");
+    &read_regression_list("$srcdir/regress-vlg.list",  $ver, $force_sv, "");
+    &read_regression_list("$srcdir/regress-sv.list",   $ver, $force_sv, "");
+    &read_regression_list("$srcdir/regress-vhdl.list", $ver, $force_sv, "");
     if ($force_sv) {
-        &read_regression_list("regress-synth.list", $ver, $force_sv, "");
+        &read_regression_list("$srcdir/regress-synth.list", $ver, $force_sv, "");
     } else {
-        &read_regression_list("regress-synth.list", $ver, $force_sv, "-S");
+        &read_regression_list("$srcdir/regress-synth.list", $ver, $force_sv, "-S");
     }
 }
 my $failed = &execute_regression($suffix, $strict, $with_valg);
@@ -86,12 +92,13 @@ sub execute_regression {
         $len = length($tname) if (length($tname) > $len);
     }
 
+    print "--------------- $builddir";
     # Make sure we have a log and work directory.
-    if (! -d 'log') {
-        mkdir 'log' or die "Error: unable to create log directory.\n";
+    if (! -d "$builddir/log") {
+        mkdir "$builddir/log" or die "Error: unable to create log directory.\n";
     }
-    if (! -d 'work') {
-        mkdir 'work' or die "Error: unable to create work directory.\n";
+    if (! -d "$builddir/work") {
+        mkdir "$builddir/work" or die "Error: unable to create work directory.\n";
     }
 
     if ($strict) {
@@ -112,9 +119,9 @@ sub execute_regression {
             unlink $diff{$tname} or
                 die "Error: unable to remove old diff file $diff{$tname}.\n";
         }
-        if (-e "log/$tname.log") {
-            unlink "log/$tname.log" or
-                die "Error: unable to remove old log file log/$tname.log.\n";
+        if (-e "$builddir/log/$tname.log") {
+            unlink "$builddir/log/$tname.log" or
+                die "Error: unable to remove old log file $builddir/log/$tname.log.\n";
         }
 
         if ($testtype{$tname} eq "NI") {
@@ -123,7 +130,7 @@ sub execute_regression {
             next;
         }
 
-        if (! -e "./$srcpath{$tname}/$tname.v") {
+        if (! -e "$srcdir/$srcpath{$tname}/$tname.v") {
             &print_rpt("Failed - missing source file.\n");
             $failed++;
             next;
@@ -137,9 +144,9 @@ sub execute_regression {
         $cmd .= "iverilog$sfx -o vsim $ivl_args $args{$tname}";
         $cmd .= " -s $testmod{$tname}" if ($testmod{$tname} ne "");
         $cmd .= " -t null" if ($testtype{$tname} eq "CN");
-        $cmd .= " ./$srcpath{$tname}/$tname.v";
+        $cmd .= " $srcdir/$srcpath{$tname}/$tname.v";
 #        print "$cmd\n";
-        if (run_program($cmd, '>', "log/$tname.log")) {
+        if (run_program($cmd, '>', "$builddir/log/$tname.log")) {
             if ($testtype{$tname} eq "CE") {
                 # Check if the system command core dumped!
                 if ($? >> 8 & 128) {
@@ -178,7 +185,7 @@ sub execute_regression {
                             "--show-reachable=yes " : "";
         $cmd .= "vvp$sfx vsim $vvp_args $plargs{$tname}";
 #        print "$cmd\n";
-        if ($pass_type == 0 and run_program($cmd, '>>', "log/$tname.log")) {
+        if ($pass_type == 0 and run_program($cmd, '>>', "$builddir/log/$tname.log")) {
             if ($testtype{$tname} eq "RE") {
                 # Check if the system command core dumped!
                 if ($? >> 8 & 128) {
@@ -202,7 +209,7 @@ sub execute_regression {
         if ($diff{$tname} ne "") {
             $diff_file = $diff{$tname}
         } elsif ($gold{$tname} ne "") {
-            $diff_file = "log/$tname.log";
+            $diff_file = "$builddir/log/$tname.log";
         } else {
             if ($pass_type == 1) {
                 &print_rpt("Passed - CE.\n");
@@ -213,10 +220,10 @@ sub execute_regression {
                 $passed++;
                 next;
             }
-            $diff_file = "log/$tname.log";
+            $diff_file = "$builddir/log/$tname.log";
         }
-#        print "diff $gold{$tname}, $diff_file, $offset{$tname}, $unordered{$tname}\n";
-        if (diff($gold{$tname}, $diff_file, $offset{$tname}, $unordered{$tname})) {
+        print "diff $srcdir/$gold{$tname}, $diff_file, $offset{$tname}, $unordered{$tname}\n";
+        if (diff("$srcdir/$gold{$tname}", $diff_file, $offset{$tname}, $unordered{$tname})) {
             if ($testtype{$tname} eq "EF") {
                 &print_rpt("Passed - expected fail.\n");
                 $expected_fail++;
@@ -244,7 +251,7 @@ sub execute_regression {
 
     } continue {
         if ($tname ne "") {
-            run_program("rm -rf ./vsim ivl_vhdl_work") and
+            run_program("rm -rf $builddir/vsim $builddir/ivl_vhdl_work") and
                 die "Error: failed to remove temporary file.\n";
         }
     }
@@ -254,7 +261,7 @@ sub execute_regression {
                " Not Implemented=$not_impl, Expected Fail=$expected_fail\n");
 
     # Remove remaining temporary files
-    run_program("rm -f *.tmp ivltests/*.tmp");
+    run_program("rm -f $builddir/*.tmp $builddir/ivltests/*.tmp");
 
     return $failed;
 }

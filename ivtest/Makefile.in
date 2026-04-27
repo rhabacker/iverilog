@@ -61,18 +61,18 @@ check-installed:
 check-installed-vpi:
 	@echo "Running vpi_reg.pl"
 ifeq (@LIBVERIUSER@,yes)
-	cd $(abs_srcdir); perl vpi_reg.pl --with-pli1 $(opts)
+	perl $(srcdir)/vpi_reg.pl --with-pli1 $(opts)
 else
-	cd $(abs_srcdir); perl vpi_reg.pl $(opts)
+	perl $(srcdir)/vpi_reg.pl $(opts)
 endif
 
 check-installed-vvp:
 	@echo "Running vvp_reg.pl"
-	cd $(abs_srcdir); perl vvp_reg.pl $(opts)
+	perl $(srcdir)/vvp_reg.pl $(opts)
 
 check-installed-vvp-py:
 	@echo "Running vvp_reg.py"
-	cd $(abs_srcdir); python3 vvp_reg.py $(opts)
+	python3 $(srcdir)/vvp_reg.py $(opts)
 
 clean:
 	rm -f *.vpi
