@@ -9,7 +9,7 @@
 # wget -O config.guess 'https://git.savannah.gnu.org/cgit/config.git/plain/config.guess'
 # wget -O config.sub 'https://git.savannah.gnu.org/cgit/config.git/plain/config.sub'
 echo "Autoconf in root..."
-autoconf -f
+autoreconf -fi
 
 echo "Precompiling lexor_keyword.gperf"
 gperf -o -i 7 -C -k 1-4,6,9,\$ -H keyword_hash -N check_identifier -t ./lexor_keyword.gperf > lexor_keyword.cc

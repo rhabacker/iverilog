@@ -11,6 +11,7 @@ dnl define libvvp ABI version
 m4_define([LIBVVP_SOVERSION], [1])
 
 AC_INIT([iverilog], [VER_MAJOR.VER_MINOR (VER_EXTRA)])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 AC_SUBST([VERSION_MAJOR], [VER_MAJOR])
 AC_SUBST([VERSION_MINOR], [VER_MINOR])
 AC_SUBST([VERSION_EXTRA], [" (VER_EXTRA)"])
@@ -438,6 +439,7 @@ AC_CONFIG_FILES([
     ivlpp/Makefile
     ivtest/Makefile
     libveriuser/Makefile
+    libveriuser/libveriuser${install_suffix}.pc:libveriuser/libveriuser.pc.in
     tgt-blif/Makefile
     tgt-fpga/Makefile
     tgt-null/Makefile
