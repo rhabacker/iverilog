@@ -24,7 +24,7 @@ AC_SUBST([LIBVVP_SOVERSION], [LIBVVP_SOVERSION])
 # setup libvvp version
 AC_SUBST([LIBVVP_VERSION], [LIBVVP_SOVERSION.VER_MAJOR.VER_MINOR])
 
-AC_CONFIG_SRCDIR([netlist.h])
+AC_CONFIG_SRCDIR([version_base.h.in])
 # Need a stamp file like the other header files
 AC_CONFIG_FILES([version_base.h],[
 _config_header=version_base.h
@@ -98,6 +98,7 @@ AC_SUBST(EXEEXT)
 
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
+AM_CONDITIONAL([WIN32], [test "x$WIN32" = "xyes"])
 
 # Detect which directory/file separator to use
 AC_MSG_CHECKING([for directory/file separator])
@@ -369,11 +370,11 @@ AC_CHECK_FUNCS(fopen64)
 # systems we may need to use the compiler in C99 mode to get a definition.
 # autoconf >= 2.70 will enable C99 if it is available. For older autoconf
 # versions, we requested C99 mode earlier with AC_PROG_CC_C99.
-AC_SEARCH_LIBS([lround], [m], [AC_DEFINE([HAVE_LROUND], [1])])
-AC_SEARCH_LIBS([llround], [m], [AC_DEFINE([HAVE_LLROUND], [1])])
-AC_SEARCH_LIBS([nan], [m], [AC_DEFINE([HAVE_NAN], [1])])
-AC_SEARCH_LIBS([fmin], [m], [AC_DEFINE([HAVE_FMIN], [1])])
-AC_SEARCH_LIBS([fmax], [m], [AC_DEFINE([HAVE_FMAX], [1])])
+AC_SEARCH_LIBS([lround], [m], [AC_DEFINE([HAVE_LROUND], [1], [Define to 1 if the system provides the 'lround' function])])
+AC_SEARCH_LIBS([llround], [m], [AC_DEFINE([HAVE_LLROUND], [1], [Define to 1 if the system provides the 'llround' function])])
+AC_SEARCH_LIBS([nan], [m], [AC_DEFINE([HAVE_NAN], [1], [Define to 1 if the system provides the 'nan' function])])
+AC_SEARCH_LIBS([fmin], [m], [AC_DEFINE([HAVE_FMIN], [1], [Define to 1 if the system provides the 'fmin' function])])
+AC_SEARCH_LIBS([fmax], [m], [AC_DEFINE([HAVE_FMAX], [1], [Define to 1 if the system provides the 'fmax' function])])
 
 # Check to see if an unsigned long and uint64_t are the same from
 # a compiler perspective. We can not just check that they are the
@@ -398,7 +399,7 @@ uint64_t uival = 1;
 result &= check(uival);
 return !result;]])],
    [AC_MSG_RESULT(no)],
-   [AC_DEFINE([UINT64_T_AND_ULONG_SAME], [1]) AC_MSG_RESULT(yes)])
+   [AC_DEFINE([UINT64_T_AND_ULONG_SAME], [1], [Define to 1 if the types 'uint64_t' and 'ulong' are the same]) AC_MSG_RESULT(yes)])
 
 # Linker option used when compiling the target
 AX_LD_RDYNAMIC
@@ -450,6 +451,7 @@ AC_CONFIG_FILES([
     driver-vpi/res.rc
     driver/Makefile
     driver/iverilog.man
+    ivl/Makefile
     ivlpp/Makefile
     ivtest/Makefile
     libveriuser/Makefile

@@ -95,8 +95,8 @@ fp%cc fp%h: $(srcdir)/fp%y
 	$(YACC) --verbose -t -p fp --defines=fp.h -o fp.cc $<
 
 ifeq (@WIN32@,yes)
-  TGTLDFLAGS=-L.. -livl
-  TGTDEPLIBS=../libivl.a
+  TGTLDFLAGS=../ivl/libivl.a
+  TGTDEPLIBS=../ivl/libivl.a
 else
   TGTLDFLAGS=
   TGTDEPLIBS=

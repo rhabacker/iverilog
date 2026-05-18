@@ -67,13 +67,21 @@ dep
 
 /ivlpp/lexor.c
 
-/lexor.cc
-/lexor_keyword.cc
-/parse.cc
-/parse.h
-/parse.output
-/syn-rules.cc
-/syn-rules.output
+/vhdlpp/lexor.cc
+/vhdlpp/lexor_keyword.cc
+/vhdlpp/parse.cc
+/vhdlpp/parse.h
+/vhdlpp/parse.output
+/vhdlpp/vhdlpp_config.h
+/vhdlpp/vhdlpp
+
+/ivl/lexor.cc
+/ivl/lexor_keyword.cc
+/ivl/parse.cc
+/ivl/parse.h
+/ivl/parse.output
+/ivl/syn-rules.cc
+/ivl/syn-rules.output
 
 /tgt-pcb/fp.cc
 /tgt-pcb/fp.h
@@ -109,12 +117,13 @@ dep
 *.exe
 /driver/iverilog
 /driver-vpi/iverilog-vpi
-/ivl
+/ivl/ivl
+/ivl/ivl.exe
 /ivlpp/ivlpp
 /vhdlpp/vhdlpp
 /vvp/vvp
 
-/ivl.exp
+ivl/ivl.exp
 /vvp/vvp.exp
 
 # Check output

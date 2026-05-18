@@ -73,8 +73,8 @@ dep:
 	mv $*.d dep
 
 ifeq (@WIN32@,yes)
-  TGTLDFLAGS=-L.. -livl
-  TGTDEPLIBS=../libivl.a
+  TGTLDFLAGS=../ivl/libivl.a
+  TGTDEPLIBS=../ivl/libivl.a
 else
   TGTLDFLAGS=
   TGTDEPLIBS=
