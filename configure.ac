@@ -8,7 +8,7 @@ m4_define([VER_MINOR], [0])
 m4_define([VER_EXTRA], [devel])
 
 dnl define libvvp ABI version
-m4_define([LIBVVP_SOVERSION], [1])
+m4_define([LIBVVP_ABI_VERSION], [1])
 
 AC_INIT([iverilog], [VER_MAJOR.VER_MINOR (VER_EXTRA)])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
@@ -19,10 +19,33 @@ AC_SUBST([VERSION], ["VER_MAJOR.VER_MINOR (VER_EXTRA)"])
 # used in res.rc
 AC_SUBST([PRODUCTVERSION], ["VER_MAJOR,VER_MINOR,0,0"])
 
-# setup libvvp soversion, which depends on abi not package version
-AC_SUBST([LIBVVP_SOVERSION], [LIBVVP_SOVERSION])
-# setup libvvp version
-AC_SUBST([LIBVVP_VERSION], [LIBVVP_SOVERSION.VER_MAJOR.VER_MINOR])
+# libvvp libtool ABI versioning (SONAME control)
+#
+# Format used by libtool: current:revision:age
+#
+# This controls binary compatibility of libvvp, NOT the project/package version.
+#
+# Rules for changing:
+# - CURRENT: increment when the ABI is changed in a backward-incompatible way
+#   (e.g. removed/changed exported functions, changed struct layout, changed calling conventions)
+#
+# - AGE: increment when adding new ABI-compatible functionality
+#   (i.e. new exported symbols added without breaking existing ones)
+#
+# - REVISION: increment for implementation-only changes (bug fixes, internal refactoring)
+#   that do NOT affect the ABI
+#
+# SONAME is computed as: CURRENT - AGE
+#
+# Example:
+#   1:0:0 → initial ABI (libvvp.so.1)
+#   1:1:0 → backward-compatible extension (still libvvp.so.1)
+#   2:0:0 → ABI break (libvvp.so.2)
+#
+LIBVVP_SO_CURRENT=LIBVVP_ABI_VERSION
+LIBVVP_SO_REVISION=VER_MINOR
+LIBVVP_SO_AGE=0
+AC_SUBST([LIBVVP_VERSION_INFO], ["$LIBVVP_SO_CURRENT:$LIBVVP_SO_REVISION:$LIBVVP_SO_AGE"])
 
 AC_CONFIG_SRCDIR([netlist.h])
 # Need a stamp file like the other header files
@@ -40,6 +63,8 @@ AC_CONFIG_HEADERS([libveriuser/config.h])
 AC_CONFIG_HEADERS([tgt-vvp/vvp_config.h])
 AC_CONFIG_HEADERS([tgt-vhdl/vhdl_config.h])
 AC_CONFIG_HEADERS([tgt-pcb/pcb_config.h])
+
+LT_INIT([win32-dll shared static])
 
 AC_CANONICAL_HOST
 dnl Checks for programs.
@@ -59,7 +84,9 @@ AC_CHECK_TOOL(STRIP, strip, true)
 AC_CHECK_TOOL(WINDRES,windres,false)
 AC_CHECK_PROGS(XGPERF,gperf,none)
 AC_CHECK_PROGS(MAN,man,none)
+AM_CONDITIONAL([HAVE_MAN], [test "x$MAN" != "x"])
 AC_CHECK_PROGS(PS2PDF,ps2pdf,none)
+AM_CONDITIONAL([HAVE_PS2PDF], [test "x$PS2PDF" != "x"])
 AC_CHECK_PROGS(GROFF,groff,none)
 AC_CHECK_PROGS(GIT,git,none)
 if test "$XGPERF" = "none"
@@ -73,7 +100,7 @@ then
 	echo ""
 fi
 
-AC_CHECK_PROGS(LEX,flex,none)
+AC_PROG_LEX(noyywrap)
 if test "$LEX" = "none"
 then
 	echo "*** Error: No suitable flex found. ***"
@@ -81,7 +108,7 @@ then
         exit 1
 fi
 
-AC_CHECK_PROGS(YACC,bison,none)
+AC_PROG_YACC
 if test "$YACC" = "none"
 then
 	echo "*** Error: No suitable bison found. ***"
@@ -98,6 +125,8 @@ AC_SUBST(EXEEXT)
 
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
+AM_CONDITIONAL([WIN32], [test "x$WIN32" = "xyes"])
+AM_CONDITIONAL([MINGW32], [test "x$MINGW32" = "xyes"])
 
 # Check to see if we are using the Sun compiler. If so then configure
 # some of the flags to match the Sun compiler syntax. This is also used
@@ -220,12 +249,10 @@ AC_ARG_ENABLE([libvvp],
     [AS_HELP_STRING([--enable-libvvp], [build VVP as a shared library])],
     [enable_libvvp=yes],
     [enable_libvvp=no])
-
-AC_SUBST([LIBVVP], [$enable_libvvp])
-
 AS_IF([test "x$enable_libvvp" = "xyes"],
     [AC_MSG_NOTICE([Building with libvvp support enabled])],
     [AC_MSG_NOTICE([Building with libvvp support disabled])])
+AM_CONDITIONAL([ENABLE_LIBVVP], [test "x$enable_libvvp" = "xyes"])
 
 AC_ARG_ENABLE([libveriuser],
     [AS_HELP_STRING([--enable-libveriuser], [include support for PLI 1 (deprecated)])],
@@ -454,7 +481,7 @@ AC_CONFIG_FILES([
     vhdlpp/Makefile
     vpi/Makefile
     vvp/Makefile
-    vvp/libvvp.pc
-    vvp/vvp.man
+    vvp/libvvp${install_suffix}.pc:vvp/libvvp.pc.in
+    vvp/vvp${install_suffix}.1:vvp/vvp.man.in
 ])
 AC_OUTPUT

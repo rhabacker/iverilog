@@ -24,7 +24,7 @@
 
 # include  "parse_misc.h"
 # include  "compile.h"
-# include  "parse.h"
+# include  "parse.hh"
 # include  <cstring>
 # include  <cassert>
 # include  "ivl_alloc.h"
