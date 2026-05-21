@@ -10,4 +10,5 @@ else
   install_suffix="$enable_suffix"
 fi
 AC_SUBST(install_suffix)
+AC_SUBST([suffix], [$install_suffix])
 ])# AX_ENABLE_SUFFIX
