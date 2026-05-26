@@ -306,8 +306,10 @@ installdirs: $(srcdir)/../mkinstalldirs
 		"$(DESTDIR)$(man1dir)"
 
 installpkgconfig:
+ifeq (@LIBVVP@,yes)
 	$(INSTALL) -d "$(DESTDIR)$(pkgconfigdir)"
 	$(INSTALL_DATA) libvvp.pc "$(DESTDIR)$(pkgconfigdir)/libvvp$(suffix).pc"
+endif
 
 uninstall: $(UNINSTALL32)
 	rm -f "$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@"
