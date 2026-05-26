@@ -126,6 +126,7 @@ def compare_files(log_path, gold_path):
 
 def run_cmd(cmd: list) -> subprocess.CompletedProcess:
     '''Run the given command'''
+    print(f"Running: '{cmd}'")
     res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
     return res
 

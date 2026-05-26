@@ -97,7 +97,7 @@ def process_test(item: list, cfg: list) -> str:
     it_opts = {
         'key'               : it_key,
         'type'              : it_dict['type'],
-        'iverilog_args'     : it_dict.get('iverilog-args', [ ]),
+        'iverilog_args'     : it_dict.get('iverilog-args', []),
         'source'            : os.path.join("ivltests", it_dict['source']),
         'modulename'        : None,
         'gold'              : it_dict.get('gold', None),
@@ -105,6 +105,8 @@ def process_test(item: list, cfg: list) -> str:
         'vvp_args'          : it_dict.get('vvp-args', [ ]),
         'vvp_args_extended' : it_dict.get('vvp-args-extended', [ ])
     }
+
+    it_opts['iverilog_args'].extend(os.environ.get('IVERILOG_OPTIONS').split())
 
     if cfg['strict']:
         it_opts['iverilog_args'].append("-gstrict-expr-width")

@@ -17,6 +17,7 @@
 #
 SHELL = /bin/sh
 
+abs_top_builddir=@abs_top_builddir@
 abs_srcdir=@abs_srcdir@
 srcdir=@srcdir@
 suffix = @install_suffix@
@@ -50,8 +51,15 @@ check-installed-vvp:
 	cd $(abs_srcdir); perl vvp_reg.pl $(opts)
 
 check-installed-vvp-py:
-	@echo "Running vvp_reg.py"
-	cd $(abs_srcdir); python3 vvp_reg.py $(opts)
+	@echo "Running vvp_reg.py"; \
+	cd $(abs_srcdir); \
+	PATH=$(abs_top_buildir)@PATH_SEP@driver:$$PATH \
+	IVERILOG_OPTIONS=" -v \
+		-BI$(abs_top_builddir)@PATH_SEP@ivl \
+		-BP$(abs_top_builddir)@PATH_SEP@ivlpp \
+		-BM$(abs_top_builddir)@PATH_SEP@vpi \
+		-Bt$(abs_top_builddir)@PATH_SEP@tgt-vvp" \
+	python3 vvp_reg.py $(opts)
 
 clean:
 	rm -f $(srcdir)/*.vpi
