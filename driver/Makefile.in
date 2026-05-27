@@ -71,7 +71,7 @@ check: all
 	@IVERILOG_ICONFIG=$(abs_builddir)/tempfile $(builddir)/iverilog@EXEEXT@ \
 	    -B$(top_builddir)$(PATH_SEP)tgt-vvp \
 	    -BI$(top_builddir)$(PATH_SEP)ivl \
-	    -BM$(top_builddir)$(PATH_SEP)vpi \
+	    -BM$(top_builddir)$(PATH_SEP)vpi/.libs \
 	    -BP$(top_builddir)$(PATH_SEP)ivlpp \
 	    -Bt$(top_builddir)$(PATH_SEP)tgt-vvp \
 	    $(verbose) -o top.vvp -s top $(srcdir)/hello_world.v && \

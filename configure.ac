@@ -41,6 +41,8 @@ AC_CONFIG_HEADERS([tgt-vvp/vvp_config.h])
 AC_CONFIG_HEADERS([tgt-vhdl/vhdl_config.h])
 AC_CONFIG_HEADERS([tgt-pcb/pcb_config.h])
 
+LT_INIT([win32-dll shared static])
+
 AC_CANONICAL_HOST
 dnl Checks for programs.
 AC_PROG_CC
@@ -99,6 +101,7 @@ AC_SUBST(EXEEXT)
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 AM_CONDITIONAL([WIN32], [test "x$WIN32" = "xyes"])
+AM_CONDITIONAL([MINGW32], [test "x$MINGW32" = "xyes"])
 
 # Detect which directory/file separator to use
 AC_MSG_CHECKING([for directory/file separator])
@@ -213,6 +216,7 @@ AC_CHECK_LIB(pthread, pthread_create)
 AC_CHECK_LIB(z, gzwrite)
 AC_CHECK_LIB(z, gzwrite, HAVE_LIBZ=yes, HAVE_LIBZ=no)
 AC_SUBST(HAVE_LIBZ)
+AM_CONDITIONAL([HAVE_LIBZ], [test "x$HAVE_LIBZ" = "xyes"])
 if test "$WIN32" = "yes"; then
 AC_CHECK_LIB(bz2, main)
 AC_CHECK_LIB(bz2, main, HAVE_LIBBZ2=yes, HAVE_LIBBZ2=no)
@@ -221,6 +225,7 @@ AC_CHECK_LIB(bz2, BZ2_bzdopen)
 AC_CHECK_LIB(bz2, BZ2_bzdopen, HAVE_LIBBZ2=yes, HAVE_LIBBZ2=no)
 fi
 AC_SUBST(HAVE_LIBBZ2)
+AM_CONDITIONAL([HAVE_LIBBZ2], [test "x$HAVE_LIBBZ2" = "xyes"])
 
 # The lxt/lxt2 files from GTKWave use these...
 
@@ -326,7 +331,7 @@ case "${host}" in
 esac
 
 # Setup test environment for running vvp from build directory
-VVP_BUILDDIR="$(pwd)/vvp"
+VVP_BUILDDIR="$(pwd)/vvp/.libs"
 case "$host_os" in
   linux*)
     ENV_VVP="LD_LIBRARY_PATH=$VVP_BUILDDIR"

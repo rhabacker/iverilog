@@ -182,7 +182,7 @@ all: dep vvp@EXEEXT@ vvp.man
 
 # ENV_VVP sets LD_LIBRARY_PATH by default to run vvp from the build tree
 check: all
-	$(ENV_VVP) ./vvp$(suffix)@EXEEXT@ -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
+	$(ENV_VVP) ./vvp$(suffix)@EXEEXT@ -v -M../vpi/.libs $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
 
 clean:
 	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc $(LIB_CLEAN)
